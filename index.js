@@ -4,7 +4,7 @@ function handleFileInputChange() {
   let fileInput = document.getElementById("image-input");
   fileInput.onchange = () => {
     if (fileInput.files.length !== 0) {
-      document.getElementById("convert-btn").disabled = false;
+      convert(50, 320);
     }
   };
 }
