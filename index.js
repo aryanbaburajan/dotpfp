@@ -67,13 +67,9 @@ function scrollOnTo(id) {
   });
 }
 
-function convert() {
+function convert(inputScale, outputScale) {
   const imageInput = document.getElementById("image-input");
   const file = imageInput.files[0];
-
-  const inputScale = 50;
-  const outputScale = 320;
-  // const outputScale = 4000;
 
   const reader = new FileReader();
 
@@ -134,8 +130,79 @@ function saveAsSVG() {
   a.click();
 }
 
-// refactor
+function saveAsPNG() {
+  convert(50, 4000);
+
+  let render = document.getElementById("render");
+  downloadSvg(render, "dotpfp.png");
+
+  convert(50, 320);
+}
+
+function copyStylesInline(destinationNode, sourceNode) {
+  let containerElements = ["svg", "g"];
+  for (let cd = 0; cd < destinationNode.childNodes.length; cd++) {
+    let child = destinationNode.childNodes[cd];
+    if (containerElements.indexOf(child.tagName) != -1) {
+      copyStylesInline(child, sourceNode.childNodes[cd]);
+      continue;
+    }
+    let style =
+      sourceNode.childNodes[cd].currentStyle ||
+      window.getComputedStyle(sourceNode.childNodes[cd]);
+    if (style == "undefined" || style == null) continue;
+    for (let st = 0; st < style.length; st++) {
+      child.style.setProperty(style[st], style.getPropertyValue(style[st]));
+    }
+  }
+}
+
+function triggerDownload(imgURI, fileName) {
+  let evt = new MouseEvent("click", {
+    view: window,
+    bubbles: false,
+    cancelable: true,
+  });
+  let a = document.createElement("a");
+  a.setAttribute("download", fileName);
+  a.setAttribute("href", imgURI);
+  a.setAttribute("target", "_blank");
+  a.dispatchEvent(evt);
+}
+
+function downloadSvg(svg, fileName) {
+  let copy = svg.cloneNode(true);
+  copyStylesInline(copy, svg);
+  let canvas = document.createElement("canvas");
+  let bbox = svg.getBBox();
+  canvas.width = bbox.width;
+  canvas.height = bbox.height;
+  let ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, bbox.width, bbox.height);
+  let data = new XMLSerializer().serializeToString(copy);
+  let DOMURL = window.URL || window.webkitURL || window;
+  let img = new Image();
+  let svgBlob = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
+  let url = DOMURL.createObjectURL(svgBlob);
+  img.onload = function () {
+    ctx.drawImage(img, 0, 0);
+    DOMURL.revokeObjectURL(url);
+    if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
+      let blob = canvas.msToBlob();
+      navigator.msSaveOrOpenBlob(blob, fileName);
+    } else {
+      let imgURI = canvas
+        .toDataURL("image/png")
+        .replace("image/png", "image/octet-stream");
+      triggerDownload(imgURI, fileName);
+    }
+  };
+  img.src = url;
+}
+
 // function saveAsPNG() {
+//   convert(50, 4000);
+
 //   let render = document.getElementById("render");
 
 //   (img = new Image()),
@@ -144,18 +211,18 @@ function saveAsSVG() {
 
 //   img.src = "data:image/svg+xml;base64," + window.btoa(svgStr);
 
-//   var canvas = document.createElement("canvas");
+//   let canvas = document.createElement("canvas");
 
-//   var w = render.style.width.slice(0, -2);
-//   var h = render.style.height.slice(0, -2);
+//   let w = render.style.width.slice(0, -2);
+//   let h = render.style.height.slice(0, -2);
 
 //   canvas.width = w;
 //   canvas.height = h;
 //   canvas.getContext("2d").drawImage(img, 0, 0, w, h);
 
-//   var imgURL = canvas.toDataURL("image/png");
+//   let imgURL = canvas.toDataURL("image/png");
 
-//   var dlLink = document.createElement("a");
+//   let dlLink = document.createElement("a");
 //   dlLink.download = "image";
 //   dlLink.href = imgURL;
 //   dlLink.dataset.downloadurl = ["image/png", dlLink.download, dlLink.href].join(
@@ -167,4 +234,6 @@ function saveAsSVG() {
 //   document.body.appendChild(dlLink);
 //   dlLink.click();
 //   document.body.removeChild(dlLink);
+
+//   convert(50, 320);
 // }
