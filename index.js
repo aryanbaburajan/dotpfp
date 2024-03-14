@@ -11,52 +11,12 @@ function handleFileInputChange() {
 
 function drawResizedImageIntoCanvas(width, height, image) {
   let canvas = document.createElement("canvas"),
-    ctx = canvas.getContext("2d"),
-    offCanvas = document.createElement("canvas"),
-    offCanvasCtx = offCanvas.getContext("2d");
+    ctx = canvas.getContext("2d");
 
   canvas.width = width;
   canvas.height = height;
 
-  let cur = {
-    width: Math.floor(image.width * 0.5),
-    height: Math.floor(image.height * 0.5),
-  };
-
-  offCanvas.width = cur.width;
-  offCanvas.height = cur.height;
-
-  offCanvasCtx.drawImage(image, 0, 0, cur.width, cur.height);
-
-  while (cur.width * 0.5 > width) {
-    cur = {
-      width: Math.floor(cur.width * 0.5),
-      height: Math.floor(cur.height * 0.5),
-    };
-    offCanvasCtx.drawImage(
-      offCanvas,
-      0,
-      0,
-      cur.width * 2,
-      cur.height * 2,
-      0,
-      0,
-      cur.width,
-      cur.height
-    );
-  }
-
-  ctx.drawImage(
-    offCanvas,
-    0,
-    0,
-    cur.width,
-    cur.height,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+  ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, width, height);
 
   return { canvas, ctx };
 }
@@ -186,54 +146,16 @@ function downloadSvg(svg, fileName) {
   let url = DOMURL.createObjectURL(svgBlob);
   img.onload = function () {
     ctx.drawImage(img, 0, 0);
-    DOMURL.revokeObjectURL(url);
-    if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
-      let blob = canvas.msToBlob();
-      navigator.msSaveOrOpenBlob(blob, fileName);
-    } else {
-      let imgURI = canvas
-        .toDataURL("image/png")
-        .replace("image/png", "image/octet-stream");
-      triggerDownload(imgURI, fileName);
-    }
+    // DOMURL.revokeObjectURL(url);
+    // if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
+    //   let blob = canvas.msToBlob();
+    //   navigator.msSaveOrOpenBlob(blob, fileName);
+    // } else {
+    //   let imgURI = canvas
+    //     .toDataURL("image/png")
+    //     .replace("image/png", "image/octet-stream");
+    //   triggerDownload(imgURI, fileName);
+    // }
   };
   img.src = url;
 }
-
-// function saveAsPNG() {
-//   convert(50, 4000);
-
-//   let render = document.getElementById("render");
-
-//   (img = new Image()),
-//     (serializer = new XMLSerializer()),
-//     (svgStr = serializer.serializeToString(render));
-
-//   img.src = "data:image/svg+xml;base64," + window.btoa(svgStr);
-
-//   let canvas = document.createElement("canvas");
-
-//   let w = render.style.width.slice(0, -2);
-//   let h = render.style.height.slice(0, -2);
-
-//   canvas.width = w;
-//   canvas.height = h;
-//   canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-
-//   let imgURL = canvas.toDataURL("image/png");
-
-//   let dlLink = document.createElement("a");
-//   dlLink.download = "image";
-//   dlLink.href = imgURL;
-//   dlLink.dataset.downloadurl = ["image/png", dlLink.download, dlLink.href].join(
-//     ":"
-//   );
-
-//   console.log(imgURL);
-
-//   document.body.appendChild(dlLink);
-//   dlLink.click();
-//   document.body.removeChild(dlLink);
-
-//   convert(50, 320);
-// }
