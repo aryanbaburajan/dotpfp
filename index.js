@@ -38,6 +38,7 @@ function convert(inputScale, outputScale) {
 
     image.onload = function () {
       const render = document.getElementById("render");
+      const renderCtx = render.getContext("2d");
 
       const ratio = Number(outputScale / inputScale);
       const radius = ratio / 2;
@@ -47,8 +48,8 @@ function convert(inputScale, outputScale) {
 
       let { canvas, ctx } = drawResizedImageIntoCanvas(width, height, image);
 
-      render.style.width = width * ratio;
-      render.style.height = height * ratio;
+      render.width = width * ratio;
+      render.height = height * ratio;
 
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const pixels = imageData.data;
@@ -60,16 +61,26 @@ function convert(inputScale, outputScale) {
         );
       }
 
-      const circles = grayscale.map((value, i) => {
+      renderCtx.fillStyle = "black";
+      renderCtx.fillRect(0, 0, render.width, render.height);
+
+      grayscale.forEach((value, i) => {
         const x = i % canvas.width;
         const y = Math.floor(i / canvas.width);
         const lightness = radius * (value / 255);
-        return `<circle r="${lightness}" cx="${x * ratio + radius}" cy="${
-          y * ratio + radius
-        }" fill="#ffffff"></circle>`;
-      });
 
-      render.innerHTML = circles.join("");
+        renderCtx.beginPath();
+        renderCtx.arc(
+          x * ratio + radius,
+          y * ratio + radius,
+          lightness,
+          0,
+          2 * Math.PI,
+          false
+        );
+        renderCtx.fillStyle = "white";
+        renderCtx.fill();
+      });
     };
 
     image.src = e.target.result;
@@ -79,83 +90,20 @@ function convert(inputScale, outputScale) {
   scrollOnTo("result");
 }
 
-function saveAsSVG() {
-  let render = document.getElementById("render");
-
-  const base64doc = btoa(decodeURIComponent(render.outerHTML));
-
-  const a = document.createElement("a");
-  a.download = "dotpfp.svg";
-  a.href = "data:text/html;base64," + base64doc;
-  a.click();
-}
-
 function saveAsPNG() {
   convert(50, 4000);
 
   let render = document.getElementById("render");
-  downloadSvg(render, "dotpfp.png");
+  let url = render
+    .toDataURL("image/png")
+    .replace("image/png", "image/octet-stream");
+
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = "dotpfp.png";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
   convert(50, 320);
-}
-
-function copyStylesInline(destinationNode, sourceNode) {
-  let containerElements = ["svg", "g"];
-  for (let cd = 0; cd < destinationNode.childNodes.length; cd++) {
-    let child = destinationNode.childNodes[cd];
-    if (containerElements.indexOf(child.tagName) != -1) {
-      copyStylesInline(child, sourceNode.childNodes[cd]);
-      continue;
-    }
-    let style =
-      sourceNode.childNodes[cd].currentStyle ||
-      window.getComputedStyle(sourceNode.childNodes[cd]);
-    if (style == "undefined" || style == null) continue;
-    for (let st = 0; st < style.length; st++) {
-      child.style.setProperty(style[st], style.getPropertyValue(style[st]));
-    }
-  }
-}
-
-function triggerDownload(imgURI, fileName) {
-  let evt = new MouseEvent("click", {
-    view: window,
-    bubbles: false,
-    cancelable: true,
-  });
-  let a = document.createElement("a");
-  a.setAttribute("download", fileName);
-  a.setAttribute("href", imgURI);
-  a.setAttribute("target", "_blank");
-  a.dispatchEvent(evt);
-}
-
-function downloadSvg(svg, fileName) {
-  let copy = svg.cloneNode(true);
-  copyStylesInline(copy, svg);
-  let canvas = document.createElement("canvas");
-  let bbox = svg.getBBox();
-  canvas.width = bbox.width;
-  canvas.height = bbox.height;
-  let ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, bbox.width, bbox.height);
-  let data = new XMLSerializer().serializeToString(copy);
-  let DOMURL = window.URL || window.webkitURL || window;
-  let img = new Image();
-  let svgBlob = new Blob([data], { type: "image/svg+xml;charset=utf-8" });
-  let url = DOMURL.createObjectURL(svgBlob);
-  img.onload = function () {
-    ctx.drawImage(img, 0, 0);
-    // DOMURL.revokeObjectURL(url);
-    // if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) {
-    //   let blob = canvas.msToBlob();
-    //   navigator.msSaveOrOpenBlob(blob, fileName);
-    // } else {
-    //   let imgURI = canvas
-    //     .toDataURL("image/png")
-    //     .replace("image/png", "image/octet-stream");
-    //   triggerDownload(imgURI, fileName);
-    // }
-  };
-  img.src = url;
 }

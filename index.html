@@ -67,21 +67,15 @@
           id="result"
           class="grow shrink-0 bases-full md:basis-4/12 w-full h-full flex justify-center items-center flex-col"
         >
-          <svg
-            class="bg-black aspect-square w-4/5"
-            style="background-color: black"
+          <canvas
+            width="80%"
+            height="80%"
+            class="bg-black w-4/5"
             id="render"
             xmlns="http://www.w3.org/2000/svg"
             xmlns:xlink="http://www.w3.org/1999/xlink"
-          ></svg>
+          ></canvas>
           <div class="m-6">
-            <button
-              onclick="saveAsSVG();"
-              type="button"
-              class="inline-flex whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 p-2.5 bg-slate-900 text-white hover:bg-slate-800"
-            >
-              Save as SVG
-            </button>
             <button
               onclick="saveAsPNG();"
               type="button"
